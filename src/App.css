@@ -668,6 +668,32 @@
   }
 }
 
+.cal-nav-spacer {
+  flex: 1;
+}
+
+.cal-export-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--sans);
+  color: var(--text);
+  padding: 4px 11px;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
 .cal-filters {
   display: flex;
   gap: 10px;

@@ -6,17 +6,17 @@ import { tagStyle, parseTagFilter } from '../utils/tags';
 const DAY_HEADERS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MAX_PER_DAY = 3;
 
-// Build 42-cell grid (6 weeks) starting from the Monday on/before the 1st.
+// ── Calendar helpers ─────────────────────────────────────────
+
 function getCalendarDays(year, month) {
   const firstDay = new Date(year, month, 1);
-  const startDow = firstDay.getDay(); // 0=Sun … 6=Sat
-  const startOffset = startDow === 0 ? 6 : startDow - 1; // steps back to Monday
+  const startDow = firstDay.getDay();
+  const startOffset = startDow === 0 ? 6 : startDow - 1;
   const todayStr = new Date().toDateString();
 
   return Array.from({ length: 42 }, (_, i) => {
     const d = new Date(year, month, 1 - startOffset + i);
     return {
-      date: d,
       dateStr: d.toDateString(),
       day: d.getDate(),
       isCurrentMonth: d.getMonth() === month,
@@ -29,14 +29,90 @@ function fmtTime(iso) {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
-// ── Component ────────────────────────────────────────────────
+// ── ICS helpers ───────────────────────────────────────────────
+
+// "2026-04-04T14:30" or any ISO string → "20260404T103000Z" (UTC)
+function icsDate(iso) {
+  return new Date(iso)
+    .toISOString()
+    .replace(/[-:]/g, '')    // remove dashes and colons
+    .replace(/\.\d{3}/, ''); // remove milliseconds (keep trailing Z)
+}
+
+function escapeIcs(text) {
+  return String(text)
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n');
+}
+
+// Returns duration in ms from a todo's estimate, defaulting to 1 hour.
+function estimateMs(estimate) {
+  if (!estimate) return 3_600_000;
+  const { value, unit } = estimate;
+  if (unit === 'minutes') return value * 60_000;
+  if (unit === 'hours')   return value * 3_600_000;
+  if (unit === 'days')    return value * 86_400_000;
+  return 3_600_000;
+}
+
+function buildIcs(monthTimeblocks, todosById, calName) {
+  const stamp = icsDate(new Date());
+
+  const events = monthTimeblocks.flatMap(tb => {
+    const todo = todosById.get(tb.todoId);
+    if (!todo) return [];
+
+    const startMs = new Date(tb.scheduledAt).getTime();
+    const endMs   = startMs + estimateMs(todo.estimate);
+
+    const descParts = [
+      todo.tags?.length  ? `Tags: ${todo.tags.join(', ')}` : '',
+      todo.deadline      ? `Deadline: ${new Date(todo.deadline).toLocaleString()}` : '',
+    ].filter(Boolean);
+
+    return [
+      'BEGIN:VEVENT',
+      `UID:toodles-${tb.id}@toodles`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART:${icsDate(startMs)}`,
+      `DTEND:${icsDate(endMs)}`,
+      `SUMMARY:${escapeIcs(todo.title)}`,
+      ...(descParts.length ? [`DESCRIPTION:${escapeIcs(descParts.join('\n'))}`] : []),
+      'END:VEVENT',
+    ].join('\r\n');
+  });
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Toodles//EN',
+    'CALSCALE:GREGORIAN',
+    `X-WR-CALNAME:${escapeIcs(calName)}`,
+    ...events,
+    'END:VCALENDAR',
+  ].join('\r\n');
+}
+
+function downloadFile(content, filename) {
+  const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Component ─────────────────────────────────────────────────
 
 export default function WorkloadTab() {
-  const [todos, setTodos]         = useState([]);
+  const [todos,      setTodos]      = useState([]);
   const [timeblocks, setTimeblocks] = useState([]);
-  const [tagQuery, setTagQuery]   = useState('');
-  const [nameQuery, setNameQuery] = useState('');
-  const [{ year, month }, setYM]  = useState(() => {
+  const [tagQuery,   setTagQuery]   = useState('');
+  const [nameQuery,  setNameQuery]  = useState('');
+  const [{ year, month }, setYM]    = useState(() => {
     const n = new Date();
     return { year: n.getFullYear(), month: n.getMonth() };
   });
@@ -75,11 +151,21 @@ export default function WorkloadTab() {
     return ids;
   }, [todos, tagFilterFn, nameQuery]);
 
-  // Map dateStr → sorted array of {timeblock + todo}
+  // Timeblocks for the current month that pass the filter (used for calendar + export)
+  const monthTimeblocks = useMemo(() => {
+    const first = new Date(year, month, 1).getTime();
+    const last  = new Date(year, month + 1, 0, 23, 59, 59, 999).getTime();
+    return timeblocks.filter(tb => {
+      if (!filteredTodoIds.has(tb.todoId)) return false;
+      const t = new Date(tb.scheduledAt).getTime();
+      return t >= first && t <= last;
+    });
+  }, [timeblocks, filteredTodoIds, year, month]);
+
+  // Map dateStr → sorted array of {timeblock + todo} for calendar rendering
   const timeblocksMap = useMemo(() => {
     const map = new Map();
-    for (const tb of timeblocks) {
-      if (!filteredTodoIds.has(tb.todoId)) continue;
+    for (const tb of monthTimeblocks) {
       const todo = todosById.get(tb.todoId);
       if (!todo) continue;
       const key = new Date(tb.scheduledAt).toDateString();
@@ -89,11 +175,18 @@ export default function WorkloadTab() {
     for (const arr of map.values())
       arr.sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
     return map;
-  }, [timeblocks, filteredTodoIds, todosById]);
+  }, [monthTimeblocks, todosById]);
 
   const calDays    = useMemo(() => getCalendarDays(year, month), [year, month]);
   const monthLabel = new Date(year, month, 1).toLocaleDateString([], { month: 'long', year: 'numeric' });
   const hasFilters = tagQuery.trim() || nameQuery.trim();
+
+  // Export
+  const handleExport = () => {
+    const ics      = buildIcs(monthTimeblocks, todosById, `Toodles — ${monthLabel}`);
+    const filename = `toodles-${year}-${String(month + 1).padStart(2, '0')}.ics`;
+    downloadFile(ics, filename);
+  };
 
   return (
     <div className="workload-tab">
@@ -104,6 +197,17 @@ export default function WorkloadTab() {
         <h2 className="cal-month-title">{monthLabel}</h2>
         <button className="cal-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
         <button className="cal-today-btn" onClick={goToday}>Today</button>
+        <span className="cal-nav-spacer" />
+        <button
+          className="cal-export-btn"
+          onClick={handleExport}
+          disabled={monthTimeblocks.length === 0}
+          title={monthTimeblocks.length === 0
+            ? 'No timeblocks in this month to export'
+            : `Export ${monthTimeblocks.length} timeblock${monthTimeblocks.length !== 1 ? 's' : ''} as .ics`}
+        >
+          Export .ics{monthTimeblocks.length > 0 && ` (${monthTimeblocks.length})`}
+        </button>
       </div>
 
       {/* ── Filters ── */}
@@ -153,8 +257,8 @@ export default function WorkloadTab() {
         ))}
 
         {calDays.map(({ dateStr, day, isCurrentMonth, isToday }) => {
-          const events  = timeblocksMap.get(dateStr) ?? [];
-          const shown   = events.slice(0, MAX_PER_DAY);
+          const events   = timeblocksMap.get(dateStr) ?? [];
+          const shown    = events.slice(0, MAX_PER_DAY);
           const overflow = events.length - MAX_PER_DAY;
 
           return (
