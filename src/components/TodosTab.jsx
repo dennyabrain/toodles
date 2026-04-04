@@ -5,16 +5,23 @@ import TodoItem from './TodoItem';
 
 function TodosTab() {
   const [todos, setTodos] = useState([]);
+  const [timeblocks, setTimeblocks] = useState([]);
   const [newTitle, setNewTitle] = useState('');
 
   useEffect(() => {
-    const subscription = liveQuery(() =>
-      db.todos.orderBy('createdAt').toArray()
-    ).subscribe({
+    const sub = liveQuery(() => db.todos.orderBy('createdAt').toArray()).subscribe({
       next: setTodos,
       error: console.error,
     });
-    return () => subscription.unsubscribe();
+    return () => sub.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const sub = liveQuery(() => db.timeblocks.orderBy('scheduledAt').toArray()).subscribe({
+      next: setTimeblocks,
+      error: console.error,
+    });
+    return () => sub.unsubscribe();
   }, []);
 
   const addTodo = async (e) => {
@@ -50,7 +57,12 @@ function TodosTab() {
           <p className="empty-state">No todos yet. Add one above to get started.</p>
         ) : (
           topLevelTodos.map(todo => (
-            <TodoItem key={todo.id} todo={todo} allTodos={todos} />
+            <TodoItem
+              key={todo.id}
+              todo={todo}
+              allTodos={todos}
+              allTimeblocks={timeblocks}
+            />
           ))
         )}
       </div>

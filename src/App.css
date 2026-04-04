@@ -365,3 +365,101 @@
     border-color: var(--accent-border);
   }
 }
+
+.detail-sep {
+  border: none;
+  border-top: 1px solid var(--accent-border);
+  margin: 2px 0;
+}
+
+/* ── Timeblocks section ──────────────────────────────────── */
+
+.timeblocks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timeblocks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.timeblocks-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.add-timeblock-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--sans);
+  color: var(--accent);
+  padding: 2px 6px;
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--accent-bg);
+  }
+}
+
+.timeblock-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeblock-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.timeblock-date {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-h);
+}
+
+.timeblock-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.4;
+  transition: opacity 0.12s, color 0.12s;
+
+  &:hover {
+    opacity: 1;
+    color: #ef4444;
+  }
+}
+
+.add-timeblock-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.timeblocks-empty {
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0.5;
+  margin: 0;
+}

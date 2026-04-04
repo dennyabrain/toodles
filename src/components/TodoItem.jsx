@@ -3,20 +3,17 @@ import { db } from '../db';
 
 const UNIT_SHORT = { minutes: 'm', hours: 'h', days: 'd' };
 
-function formatTimeblock(iso) {
+function formatDatetime(iso) {
   if (!iso) return null;
   const d = new Date(iso);
   const now = new Date();
-  const isToday =
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate();
+  const isToday = d.toDateString() === now.toDateString();
   const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   if (isToday) return `Today ${timeStr}`;
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + timeStr;
 }
 
-function TodoItem({ todo, allTodos, depth = 0 }) {
+function TodoItem({ todo, allTodos, allTimeblocks, depth = 0 }) {
   const [expanded, setExpanded] = useState(true);
   const [detailOpen, setDetailOpen] = useState(false);
   const [addingSubtodo, setAddingSubtodo] = useState(false);
@@ -25,23 +22,34 @@ function TodoItem({ todo, allTodos, depth = 0 }) {
   // Local form state — initialized from todo prop
   const [estimateValue, setEstimateValue] = useState(todo.estimate?.value ?? '');
   const [estimateUnit, setEstimateUnit] = useState(todo.estimate?.unit ?? 'hours');
-  const [timeblock, setTimeblock] = useState(todo.timeblock ?? '');
   const [deadline, setDeadline] = useState(todo.deadline ?? '');
 
+  // Timeblock add form state
+  const [addingTimeblock, setAddingTimeblock] = useState(false);
+  const [newTimeblock, setNewTimeblock] = useState('');
+
   const children = allTodos.filter(t => t.parentId === todo.id);
+
+  const myTimeblocks = (allTimeblocks ?? [])
+    .filter(tb => tb.todoId === todo.id)
+    .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+
+  // Badge shows the nearest upcoming timeblock (or most recent if all past)
+  const now = Date.now();
+  const badgeTimeblock =
+    myTimeblocks.find(tb => new Date(tb.scheduledAt).getTime() >= now) ??
+    myTimeblocks[myTimeblocks.length - 1];
 
   const toggleComplete = () => {
     db.todos.update(todo.id, { completed: !todo.completed });
   };
 
-  // Estimate: save on blur of the value input
   const handleEstimateBlur = () => {
     const estimate =
       estimateValue === '' ? null : { value: Number(estimateValue), unit: estimateUnit };
     db.todos.update(todo.id, { estimate });
   };
 
-  // Estimate: save immediately when unit changes (value may already be set)
   const handleUnitChange = (unit) => {
     setEstimateUnit(unit);
     if (estimateValue !== '') {
@@ -49,16 +57,21 @@ function TodoItem({ todo, allTodos, depth = 0 }) {
     }
   };
 
-  // Timeblock: save immediately on change
-  const handleTimeblockChange = (val) => {
-    setTimeblock(val);
-    db.todos.update(todo.id, { timeblock: val || null });
-  };
-
-  // Deadline: save immediately on change
   const handleDeadlineChange = (val) => {
     setDeadline(val);
     db.todos.update(todo.id, { deadline: val || null });
+  };
+
+  const addTimeblock = async (e) => {
+    e.preventDefault();
+    if (!newTimeblock) return;
+    await db.timeblocks.add({ todoId: todo.id, scheduledAt: newTimeblock });
+    setNewTimeblock('');
+    setAddingTimeblock(false);
+  };
+
+  const deleteTimeblock = (id) => {
+    db.timeblocks.delete(id);
   };
 
   const addSubtodo = async (e) => {
@@ -104,20 +117,19 @@ function TodoItem({ todo, allTodos, depth = 0 }) {
           {todo.title}
         </button>
 
-        {/* Summary badges shown in the row */}
         {todo.estimate && (
           <span className="meta-badge">
             {todo.estimate.value}{UNIT_SHORT[todo.estimate.unit]}
           </span>
         )}
-        {todo.timeblock && (
+        {badgeTimeblock && (
           <span className="meta-badge timeblock">
-            {formatTimeblock(todo.timeblock)}
+            {formatDatetime(badgeTimeblock.scheduledAt)}
           </span>
         )}
         {todo.deadline && (
           <span className="meta-badge deadline">
-            ⚑ {formatTimeblock(todo.deadline)}
+            ⚑ {formatDatetime(todo.deadline)}
           </span>
         )}
 
@@ -158,16 +170,6 @@ function TodoItem({ todo, allTodos, depth = 0 }) {
           </div>
 
           <div className="detail-field">
-            <label className="detail-label">Timeblock</label>
-            <input
-              type="datetime-local"
-              value={timeblock}
-              onChange={e => handleTimeblockChange(e.target.value)}
-              className="timeblock-input"
-            />
-          </div>
-
-          <div className="detail-field">
             <label className="detail-label">Deadline</label>
             <input
               type="datetime-local"
@@ -175,6 +177,62 @@ function TodoItem({ todo, allTodos, depth = 0 }) {
               onChange={e => handleDeadlineChange(e.target.value)}
               className="timeblock-input"
             />
+          </div>
+
+          <hr className="detail-sep" />
+
+          {/* Timeblocks section */}
+          <div className="timeblocks-section">
+            <div className="timeblocks-header">
+              <span className="timeblocks-title">Timeblocks</span>
+              {!addingTimeblock && (
+                <button className="add-timeblock-btn" onClick={() => setAddingTimeblock(true)}>
+                  + Add
+                </button>
+              )}
+            </div>
+
+            {myTimeblocks.length > 0 && (
+              <ul className="timeblock-list">
+                {myTimeblocks.map(tb => (
+                  <li key={tb.id} className="timeblock-entry">
+                    <span className="timeblock-date">{formatDatetime(tb.scheduledAt)}</span>
+                    <button
+                      className="timeblock-delete"
+                      onClick={() => deleteTimeblock(tb.id)}
+                      aria-label="Remove timeblock"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {addingTimeblock && (
+              <form onSubmit={addTimeblock} className="add-timeblock-form">
+                <input
+                  type="datetime-local"
+                  value={newTimeblock}
+                  onChange={e => setNewTimeblock(e.target.value)}
+                  className="timeblock-input"
+                  autoFocus
+                  onKeyDown={e => e.key === 'Escape' && setAddingTimeblock(false)}
+                />
+                <button type="submit" className="btn-primary btn-sm">Add</button>
+                <button
+                  type="button"
+                  className="btn-cancel btn-sm"
+                  onClick={() => setAddingTimeblock(false)}
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+
+            {myTimeblocks.length === 0 && !addingTimeblock && (
+              <p className="timeblocks-empty">No timeblocks scheduled.</p>
+            )}
           </div>
         </div>
       )}
@@ -204,7 +262,13 @@ function TodoItem({ todo, allTodos, depth = 0 }) {
       {expanded && children.length > 0 && (
         <div className="children">
           {children.map(child => (
-            <TodoItem key={child.id} todo={child} allTodos={allTodos} depth={depth + 1} />
+            <TodoItem
+              key={child.id}
+              todo={child}
+              allTodos={allTodos}
+              allTimeblocks={allTimeblocks}
+              depth={depth + 1}
+            />
           ))}
         </div>
       )}
