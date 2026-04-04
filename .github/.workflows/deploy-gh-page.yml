@@ -1,0 +1,46 @@
+name: Deploy React App
+
+on:
+  push:
+    branches: ["main"] # Trigger on pushes to main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: [actions/checkout@v4](https://github.com)
+
+      - name: Setup Node
+        uses: [actions/setup-node@v4](https://github.com)
+        with:
+          node-version: "20"
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload artifact
+        uses: [actions/upload-pages-artifact@v3](https://github.com)
+        with:
+          path: ./build # Use 'dist' if you are using Vite
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: [actions/deploy-pages@v4](https://github.com/actions/deploy-pages)
+3
