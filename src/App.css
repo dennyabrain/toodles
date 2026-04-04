@@ -74,7 +74,73 @@
 .add-todo-form {
   display: flex;
   gap: 8px;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
+}
+
+/* ── Filter bar ──────────────────────────────────────────── */
+
+.filter-bar {
+  margin-bottom: 20px;
+}
+
+.filter-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0 10px;
+  gap: 6px;
+  transition: border-color 0.15s;
+
+  &:focus-within {
+    border-color: var(--accent-border);
+  }
+}
+
+.filter-icon {
+  color: var(--text);
+  opacity: 0.5;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.filter-input {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-family: var(--sans);
+  color: var(--text-h);
+  outline: none;
+
+  &::placeholder {
+    color: var(--text);
+    opacity: 0.45;
+  }
+}
+
+.filter-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 16px;
+  padding: 0 2px;
+  opacity: 0.45;
+  flex-shrink: 0;
+
+  &:hover { opacity: 1; }
+}
+
+.filter-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.filter-syntax-hint {
+  opacity: 0.5;
 }
 
 /* ── Form controls ───────────────────────────────────────── */
@@ -462,4 +528,85 @@
   color: var(--text);
   opacity: 0.5;
   margin: 0;
+}
+
+/* ── Tag chips ───────────────────────────────────────────── */
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid;
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* color / background / border-color set inline from tagStyle() */
+}
+
+.tag-chip.row-chip {
+  /* slightly smaller in the todo row */
+  font-size: 10px;
+  padding: 1px 6px;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.6;
+  margin-left: 1px;
+
+  &:hover { opacity: 1; }
+}
+
+/* Tag input area inside the detail panel */
+.tag-input-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  min-height: 34px;
+  flex: 1;
+  cursor: text;
+
+  &:focus-within {
+    border-color: var(--accent-border);
+  }
+}
+
+.tag-text-input {
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 13px;
+  font-family: var(--sans);
+  color: var(--text-h);
+  min-width: 80px;
+  flex: 1;
+
+  &::placeholder {
+    color: var(--text);
+    opacity: 0.45;
+  }
+}
+
+.detail-field.align-start {
+  align-items: flex-start;
+}
+
+/* Highlight directly-matching todo rows when filter is active */
+.todo-row.filter-match {
+  background: var(--accent-bg);
+  border-radius: 6px;
 }

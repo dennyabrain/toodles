@@ -11,3 +11,9 @@ db.version(2).stores({
   todos: '++id, title, estimate, deadline, parentId, completed, createdAt',
   timeblocks: '++id, todoId, scheduledAt'
 });
+
+// v3: *tags creates a multi-entry index — each element of the tags array is indexed
+db.version(3).stores({
+  todos: '++id, title, estimate, deadline, parentId, completed, createdAt, *tags',
+  timeblocks: '++id, todoId, scheduledAt'
+});
