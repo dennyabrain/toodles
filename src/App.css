@@ -1,7 +1,7 @@
 /* ── Layout ──────────────────────────────────────────────── */
 
 .app {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
   min-height: 100svh;
   display: flex;
@@ -609,4 +609,180 @@
 .todo-row.filter-match {
   background: var(--accent-bg);
   border-radius: 6px;
+}
+
+/* ── Workload / Calendar ─────────────────────────────────── */
+
+.workload-tab {
+  /* full width of app-content */
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.cal-month-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0;
+  min-width: 148px;
+  text-align: center;
+}
+
+.cal-nav-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-h);
+  padding: 1px 10px 3px;
+  line-height: 1.3;
+
+  &:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+}
+
+.cal-today-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--sans);
+  color: var(--text);
+  padding: 4px 11px;
+  margin-left: 4px;
+
+  &:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+}
+
+.cal-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+
+  .filter-input-wrap {
+    flex: 1;
+  }
+}
+
+/* ── Calendar grid ───────────────────────────────────────── */
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.cal-day-header {
+  padding: 7px 4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--border) 25%, var(--bg));
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+
+  &:nth-child(7) { border-right: none; }
+}
+
+.cal-day {
+  min-height: 108px;
+  padding: 5px 5px 4px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg);
+
+  /* last column — no right border */
+  &:nth-child(7n) { border-right: none; }
+
+  /* last row — grid children 43–49 (7 headers + 42 days = 49 total) */
+  &:nth-child(n+43) { border-bottom: none; }
+
+  &.other-month {
+    background: color-mix(in srgb, var(--bg) 85%, var(--border));
+  }
+}
+
+.day-num {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 3px;
+
+  .other-month & { opacity: 0.3; }
+}
+
+.day-num.today-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cal-event {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+  overflow: hidden;
+  cursor: default;
+  line-height: 1.3;
+
+  &:hover { filter: brightness(0.92); }
+}
+
+.cal-event-time {
+  font-size: 10px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.cal-event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  font-weight: 500;
+}
+
+.cal-more {
+  font-size: 11px;
+  color: var(--text);
+  opacity: 0.45;
+  padding: 1px 2px;
 }

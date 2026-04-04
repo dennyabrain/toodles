@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import TodosTab from './components/TodosTab';
+import WorkloadTab from './components/WorkloadTab';
 import './App.css';
 
 const TABS = ['Todos', 'Review', 'Workload'];
@@ -31,9 +32,7 @@ function App() {
         {activeTab === 'Review' && (
           <p className="coming-soon">Review coming soon</p>
         )}
-        {activeTab === 'Workload' && (
-          <p className="coming-soon">Workload coming soon</p>
-        )}
+        {activeTab === 'Workload' && <WorkloadTab />}
       </main>
     </div>
   );

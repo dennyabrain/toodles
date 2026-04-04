@@ -1,66 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { liveQuery } from 'dexie';
 import { db } from '../db';
+import { parseTagFilter } from '../utils/tags';
 import TodoItem from './TodoItem';
-
-// ── Tag filter parser ───────────────────────────────────────
-// Syntax:
-//   work             → has tag "work"
-//   work design      → has "work" AND "design"  (space = AND)
-//   work OR personal → has "work" OR "personal"
-//   -work            → does NOT have "work"
-//   NOT work         → does NOT have "work"
-//   work OR personal -archived → (work OR personal) AND NOT archived
-function parseTagFilter(query) {
-  const raw = query.trim();
-  if (!raw) return null;
-
-  const tokens = raw.split(/\s+/);
-  const clauses = [];
-  let i = 0;
-
-  while (i < tokens.length) {
-    const tok = tokens[i];
-
-    if (tok.toUpperCase() === 'NOT') {
-      const next = tokens[i + 1];
-      if (next) { clauses.push({ type: 'not', tag: next.toLowerCase() }); i += 2; }
-      else i++;
-      continue;
-    }
-
-    if (tok.startsWith('-') && tok.length > 1) {
-      clauses.push({ type: 'not', tag: tok.slice(1).toLowerCase() });
-      i++;
-      continue;
-    }
-
-    // Look ahead for OR chain
-    const orGroup = [tok.toLowerCase()];
-    let j = i + 1;
-    while (j < tokens.length && tokens[j].toUpperCase() === 'OR' && tokens[j + 1]) {
-      orGroup.push(tokens[j + 1].toLowerCase());
-      j += 2;
-    }
-
-    if (orGroup.length > 1) {
-      clauses.push({ type: 'or', tags: orGroup });
-    } else {
-      clauses.push({ type: 'and', tag: orGroup[0] });
-    }
-    i = j;
-  }
-
-  return (todo) => {
-    const tags = (todo.tags ?? []).map(t => t.toLowerCase());
-    return clauses.every(c => {
-      if (c.type === 'and') return tags.includes(c.tag);
-      if (c.type === 'not') return !tags.includes(c.tag);
-      if (c.type === 'or')  return c.tags.some(t => tags.includes(t));
-      return true;
-    });
-  };
-}
 
 // Walk up the tree and collect all ancestor IDs for matching todos
 function computeVisibleIds(filterFn, allTodos) {

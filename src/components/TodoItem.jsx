@@ -1,28 +1,8 @@
 import { useState } from 'react';
 import { db } from '../db';
+import { tagStyle } from '../utils/tags';
 
 const UNIT_SHORT = { minutes: 'm', hours: 'h', days: 'd' };
-
-// Deterministic color per tag name
-const TAG_PALETTE = [
-  { bg: 'rgba(59,130,246,0.12)', color: '#3b82f6', border: 'rgba(59,130,246,0.35)' },
-  { bg: 'rgba(16,185,129,0.12)', color: '#10b981', border: 'rgba(16,185,129,0.35)' },
-  { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: 'rgba(245,158,11,0.35)' },
-  { bg: 'rgba(239,68,68,0.12)',  color: '#ef4444', border: 'rgba(239,68,68,0.35)'  },
-  { bg: 'rgba(139,92,246,0.12)', color: '#8b5cf6', border: 'rgba(139,92,246,0.35)' },
-  { bg: 'rgba(236,72,153,0.12)', color: '#ec4899', border: 'rgba(236,72,153,0.35)' },
-  { bg: 'rgba(20,184,166,0.12)', color: '#14b8a6', border: 'rgba(20,184,166,0.35)' },
-  { bg: 'rgba(249,115,22,0.12)', color: '#f97316', border: 'rgba(249,115,22,0.35)' },
-];
-
-function tagStyle(tag) {
-  let hash = 0;
-  for (let i = 0; i < tag.length; i++) {
-    hash = (hash << 5) - hash + tag.charCodeAt(i);
-    hash |= 0;
-  }
-  return TAG_PALETTE[Math.abs(hash) % TAG_PALETTE.length];
-}
 
 function formatDatetime(iso) {
   if (!iso) return null;
