@@ -967,8 +967,10 @@
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
 
-  &.overdue  { color: #ef4444; border-bottom-color: color-mix(in srgb, #ef4444 30%, transparent); }
-  &.upcoming { color: #f59e0b; border-bottom-color: color-mix(in srgb, #f59e0b 30%, transparent); }
+  &.overdue    { color: #ef4444; border-bottom-color: color-mix(in srgb, #ef4444 30%, transparent); }
+  &.upcoming   { color: #f59e0b; border-bottom-color: color-mix(in srgb, #f59e0b 30%, transparent); }
+  &.timeblocks { color: #10b981; border-bottom-color: color-mix(in srgb, #10b981 30%, transparent); }
+  &.assign     { color: var(--accent); border-bottom-color: var(--accent-border); }
 }
 
 .review-count {
@@ -977,8 +979,21 @@
   padding: 1px 7px;
   border-radius: 10px;
 
-  &.overdue  { background: color-mix(in srgb,#ef4444 12%,transparent); color:#ef4444; border:1px solid color-mix(in srgb,#ef4444 35%,transparent); }
-  &.upcoming { background: color-mix(in srgb,#f59e0b 12%,transparent); color:#f59e0b; border:1px solid color-mix(in srgb,#f59e0b 35%,transparent); }
+  &.overdue    { background: color-mix(in srgb,#ef4444 12%,transparent); color:#ef4444; border:1px solid color-mix(in srgb,#ef4444 35%,transparent); }
+  &.upcoming   { background: color-mix(in srgb,#f59e0b 12%,transparent); color:#f59e0b; border:1px solid color-mix(in srgb,#f59e0b 35%,transparent); }
+  &.timeblocks { background: color-mix(in srgb,#10b981 12%,transparent); color:#10b981; border:1px solid color-mix(in srgb,#10b981 35%,transparent); }
+  &.assign     { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+}
+
+.assign-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover { text-decoration: underline; }
 }
 
 .review-empty {
@@ -1033,4 +1048,41 @@
 .review-relative {
   opacity: 0.65;
   font-weight: 400;
+}
+
+.upcoming-tb-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.upcoming-tb-day-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text);
+  opacity: 0.55;
+  margin-bottom: 2px;
+}
+
+.upcoming-tb-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: #10b981;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.upcoming-tb-label {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #10b981 10%, transparent);
+  color: #10b981;
+  border: 1px solid color-mix(in srgb, #10b981 30%, transparent);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
