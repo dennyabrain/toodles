@@ -215,7 +215,7 @@ export default function ReviewTab() {
         .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt)),
       todosById: byId,
       unscheduled: todos
-        .filter(t => !t.completed && !scheduledIds.has(t.id))
+        .filter(t => !t.completed && !scheduledIds.has(t.id) && t.parentId == null && !todos.some(c => c.parentId === t.id))
         .sort((a, b) => a.createdAt - b.createdAt),
     };
   }, [todos, timeblocks]);
