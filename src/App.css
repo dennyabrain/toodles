@@ -624,6 +624,27 @@
   }
 }
 
+.timeblock-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.12s, color 0.12s;
+
+  .timeblock-entry:hover & {
+    opacity: 0.4;
+  }
+
+  &:hover {
+    opacity: 1 !important;
+    color: var(--accent);
+  }
+}
+
 .timeblock-delete {
   background: none;
   border: none;
@@ -632,11 +653,15 @@
   font-size: 16px;
   line-height: 1;
   padding: 0 2px;
-  opacity: 0.4;
+  opacity: 0;
   transition: opacity 0.12s, color 0.12s;
 
+  .timeblock-entry:hover & {
+    opacity: 0.4;
+  }
+
   &:hover {
-    opacity: 1;
+    opacity: 1 !important;
     color: #ef4444;
   }
 }

@@ -39,7 +39,7 @@ function UpcomingTbItem({ tb, todo }) {
   return (
     <div className="review-item">
       <span className="upcoming-tb-time">{time}</span>
-      {tb.label && <span className="upcoming-tb-label">{tb.label}</span>}
+      {tb.name && <span className="upcoming-tb-label">{tb.name}</span>}
       <span className="review-title">{todo?.title ?? '(deleted)'}</span>
       {tags.length > 0 && (
         <div className="review-tags">

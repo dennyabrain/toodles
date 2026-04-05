@@ -32,6 +32,12 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
   const [newTimeblockName, setNewTimeblockName] = useState('');
   const [newTimeblockDuration, setNewTimeblockDuration] = useState('');
 
+  // Timeblock edit state
+  const [editingTbId, setEditingTbId] = useState(null);
+  const [editTbName, setEditTbName] = useState('');
+  const [editTbScheduledAt, setEditTbScheduledAt] = useState('');
+  const [editTbDuration, setEditTbDuration] = useState('');
+
   // When filtering: always expand, highlight direct matches
   const effectiveExpanded = filterFn ? true : expanded;
   const directMatch = filterFn ? filterFn(todo) : false;
@@ -111,6 +117,24 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
   };
 
   const deleteTimeblock = (id) => db.timeblocks.delete(id);
+
+  const startEditTb = (tb) => {
+    setEditingTbId(tb.id);
+    setEditTbName(tb.name ?? '');
+    setEditTbScheduledAt(tb.scheduledAt ?? '');
+    setEditTbDuration(tb.duration != null ? String(tb.duration) : '');
+  };
+
+  const saveEditTb = async (id) => {
+    await db.timeblocks.update(id, {
+      name: editTbName.trim() || null,
+      scheduledAt: editTbScheduledAt,
+      duration: editTbDuration !== '' ? parseFloat(editTbDuration) : null,
+    });
+    setEditingTbId(null);
+  };
+
+  const cancelEditTb = () => setEditingTbId(null);
 
   const deleteTodo = async () => {
     const toDelete = [];
@@ -302,11 +326,53 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
 
             {myTimeblocks.length > 0 && (
               <ul className="timeblock-list">
-                {myTimeblocks.map(tb => (
+                {myTimeblocks.map(tb => editingTbId === tb.id ? (
+                  <form
+                    key={tb.id}
+                    className="add-timeblock-form"
+                    onSubmit={e => { e.preventDefault(); saveEditTb(tb.id); }}
+                  >
+                    <input
+                      type="text"
+                      value={editTbName}
+                      onChange={e => setEditTbName(e.target.value)}
+                      className="timeblock-name-input"
+                      placeholder="Label (optional)"
+                      autoFocus
+                      onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
+                    />
+                    <input
+                      type="datetime-local"
+                      value={editTbScheduledAt}
+                      onChange={e => setEditTbScheduledAt(e.target.value)}
+                      className="timeblock-input"
+                      onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
+                    />
+                    <input
+                      type="number"
+                      min="0.25"
+                      step="0.25"
+                      value={editTbDuration}
+                      onChange={e => setEditTbDuration(e.target.value)}
+                      className="timeblock-duration-input"
+                      placeholder="Duration (h)"
+                      onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
+                    />
+                    <button type="submit" className="btn-primary btn-sm">Save</button>
+                    <button type="button" className="btn-cancel btn-sm" onClick={cancelEditTb}>Cancel</button>
+                  </form>
+                ) : (
                   <li key={tb.id} className="timeblock-entry">
                     {tb.name && <span className="timeblock-name">{tb.name}</span>}
                     <span className="timeblock-date">{formatDatetime(tb.scheduledAt)}</span>
                     {tb.duration != null && <span className="timeblock-duration">{tb.duration}h</span>}
+                    <button
+                      className="timeblock-edit"
+                      onClick={() => startEditTb(tb)}
+                      aria-label="Edit timeblock"
+                    >
+                      ✎
+                    </button>
                     <button
                       className="timeblock-delete"
                       onClick={() => deleteTimeblock(tb.id)}
