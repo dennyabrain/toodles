@@ -29,6 +29,7 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
   // Timeblock add form state
   const [addingTimeblock, setAddingTimeblock] = useState(false);
   const [newTimeblock, setNewTimeblock] = useState('');
+  const [newTimeblockName, setNewTimeblockName] = useState('');
 
   // When filtering: always expand, highlight direct matches
   const effectiveExpanded = filterFn ? true : expanded;
@@ -96,8 +97,9 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
   const addTimeblock = async (e) => {
     e.preventDefault();
     if (!newTimeblock) return;
-    await db.timeblocks.add({ todoId: todo.id, scheduledAt: newTimeblock });
+    await db.timeblocks.add({ todoId: todo.id, scheduledAt: newTimeblock, name: newTimeblockName.trim() || null });
     setNewTimeblock('');
+    setNewTimeblockName('');
     setAddingTimeblock(false);
   };
 
@@ -295,6 +297,7 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
               <ul className="timeblock-list">
                 {myTimeblocks.map(tb => (
                   <li key={tb.id} className="timeblock-entry">
+                    {tb.name && <span className="timeblock-name">{tb.name}</span>}
                     <span className="timeblock-date">{formatDatetime(tb.scheduledAt)}</span>
                     <button
                       className="timeblock-delete"
@@ -311,15 +314,23 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
             {addingTimeblock && (
               <form onSubmit={addTimeblock} className="add-timeblock-form">
                 <input
+                  type="text"
+                  value={newTimeblockName}
+                  onChange={e => setNewTimeblockName(e.target.value)}
+                  className="timeblock-name-input"
+                  placeholder="Label (optional)"
+                  autoFocus
+                  onKeyDown={e => e.key === 'Escape' && setAddingTimeblock(false)}
+                />
+                <input
                   type="datetime-local"
                   value={newTimeblock}
                   onChange={e => setNewTimeblock(e.target.value)}
                   className="timeblock-input"
-                  autoFocus
                   onKeyDown={e => e.key === 'Escape' && setAddingTimeblock(false)}
                 />
                 <button type="submit" className="btn-primary btn-sm">Add</button>
-                <button type="button" className="btn-cancel btn-sm" onClick={() => setAddingTimeblock(false)}>
+                <button type="button" className="btn-cancel btn-sm" onClick={() => { setAddingTimeblock(false); setNewTimeblockName(''); }}>
                   Cancel
                 </button>
               </form>

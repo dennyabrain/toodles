@@ -514,10 +514,40 @@
   border: 1px solid var(--border);
 }
 
-.timeblock-date {
-  flex: 1;
+.timeblock-name {
   font-size: 13px;
+  font-weight: 500;
   color: var(--text-h);
+  flex: 1;
+}
+
+.timeblock-date {
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0.65;
+  white-space: nowrap;
+}
+
+.timeblock-name-input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text-h);
+  outline: none;
+  min-width: 0;
+
+  &:focus {
+    border-color: var(--accent-border);
+  }
+
+  &::placeholder {
+    color: var(--text);
+    opacity: 0.45;
+  }
 }
 
 .timeblock-delete {
@@ -539,6 +569,7 @@
 
 .add-timeblock-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
 }
