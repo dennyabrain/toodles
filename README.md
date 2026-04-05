@@ -1,6 +1,7 @@
 # Toodles
 
 An advanced todo list.
+A todo list should not be a source of shame but a tool to help you manage your time well. Toodles is immensely flexible to account for changing nature of your todo items. 
 
 ## Features
 1. Local only database. All data is stored on your browser and can be exported from one device and imported on another.
