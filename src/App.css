@@ -1206,3 +1206,54 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ── Archive ─────────────────────────────────────────────── */
+
+.archive-nav-link {
+  margin-left: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  opacity: 0.6;
+  margin-bottom: -1px;
+
+  &:hover {
+    opacity: 1;
+    color: var(--text-h);
+  }
+}
+
+.archive-page-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  padding-left: 8px;
+}
+
+.archive-entry {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.unarchive-btn {
+  margin-top: 4px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+}

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import TodosTab from './components/TodosTab';
 import ReviewTab from './components/ReviewTab';
 import WorkloadTab from './components/WorkloadTab';
 import TodoDetailPage from './components/TodoDetailPage';
+import ArchivePage from './components/ArchivePage';
 import './App.css';
 
 const TABS = ['Todos', 'Review', 'Workload'];
@@ -27,6 +28,7 @@ function MainLayout() {
               {tab}
             </button>
           ))}
+          <Link to="/archive" className="archive-nav-link">Archive</Link>
         </nav>
       </header>
 
@@ -43,6 +45,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<MainLayout />} />
+      <Route path="/archive" element={<ArchivePage />} />
       <Route path="/:todoId" element={<TodoDetailPage />} />
     </Routes>
   );

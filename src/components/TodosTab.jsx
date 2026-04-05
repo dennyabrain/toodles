@@ -4,6 +4,15 @@ import { db } from '../db';
 import { parseTagFilter } from '../utils/tags';
 import TodoItem from './TodoItem';
 
+function isTreeFullyDone(id, todosById, childrenByParent) {
+  const t = todosById.get(id);
+  if (!t?.completed) return false;
+  for (const child of (childrenByParent.get(id) ?? [])) {
+    if (!isTreeFullyDone(child.id, todosById, childrenByParent)) return false;
+  }
+  return true;
+}
+
 // Walk up the tree and collect all ancestor IDs for matching todos
 function computeVisibleIds(filterFn, allTodos) {
   const byId = new Map(allTodos.map(t => [t.id, t]));
@@ -66,7 +75,20 @@ function TodosTab() {
     [filterFn, todos]
   );
 
-  const topLevelTodos = todos.filter(t => !t.parentId);
+  const todosById = useMemo(() => new Map(todos.map(t => [t.id, t])), [todos]);
+
+  const childrenByParent = useMemo(() => {
+    const map = new Map();
+    for (const t of todos) {
+      if (t.parentId != null) {
+        if (!map.has(t.parentId)) map.set(t.parentId, []);
+        map.get(t.parentId).push(t);
+      }
+    }
+    return map;
+  }, [todos]);
+
+  const topLevelTodos = todos.filter(t => !t.parentId && !isTreeFullyDone(t.id, todosById, childrenByParent));
   const visibleTopLevel = visibleIds
     ? topLevelTodos.filter(t => visibleIds.has(t.id))
     : topLevelTodos;
