@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import TodosTab from './components/TodosTab';
 import ReviewTab from './components/ReviewTab';
 import WorkloadTab from './components/WorkloadTab';
+import TodoDetailPage from './components/TodoDetailPage';
 import './App.css';
 
 const TABS = ['Todos', 'Review', 'Workload'];
 
-function App() {
+function MainLayout() {
   const [activeTab, setActiveTab] = useState('Todos');
 
   return (
@@ -34,6 +36,15 @@ function App() {
         {activeTab === 'Workload' && <WorkloadTab />}
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<MainLayout />} />
+      <Route path="/:todoId" element={<TodoDetailPage />} />
+    </Routes>
   );
 }
 

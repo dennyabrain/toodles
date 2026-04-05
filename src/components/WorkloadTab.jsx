@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { liveQuery } from 'dexie';
 import { db } from '../db';
 import { tagStyle, parseTagFilter } from '../utils/tags';
@@ -65,7 +66,7 @@ function buildIcs(monthTimeblocks, todosById, calName) {
     if (!todo) return [];
 
     const startMs = new Date(tb.scheduledAt).getTime();
-    const endMs   = startMs + estimateMs(todo.estimate);
+    const endMs   = startMs + (tb.duration != null ? tb.duration * 3_600_000 : estimateMs(todo.estimate));
 
     const descParts = [
       todo.tags?.length  ? `Tags: ${todo.tags.join(', ')}` : '',
@@ -276,15 +277,16 @@ export default function WorkloadTab() {
                 const firstTag = (tb.todo.tags ?? [])[0];
                 const s = firstTag ? tagStyle(firstTag) : null;
                 return (
-                  <div
+                  <Link
                     key={tb.id}
+                    to={`/${tb.todoId}`}
                     className="cal-event"
                     style={s ? { background: s.bg, color: s.color, borderColor: s.border } : undefined}
                     title={`${fmtTime(tb.scheduledAt)} — ${tb.todo.title}`}
                   >
                     <span className="cal-event-time">{fmtTime(tb.scheduledAt)}</span>
                     <span className="cal-event-title">{tb.todo.title}</span>
-                  </div>
+                  </Link>
                 );
               })}
 

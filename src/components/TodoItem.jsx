@@ -14,9 +14,9 @@ function formatDatetime(iso) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + timeStr;
 }
 
-function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null, filterFn = null }) {
+function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null, filterFn = null, defaultDetailOpen = false }) {
   const [expanded, setExpanded] = useState(true);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(defaultDetailOpen);
   const [addingSubtodo, setAddingSubtodo] = useState(false);
   const [subtodoTitle, setSubtodoTitle] = useState('');
 
@@ -30,6 +30,7 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
   const [addingTimeblock, setAddingTimeblock] = useState(false);
   const [newTimeblock, setNewTimeblock] = useState('');
   const [newTimeblockName, setNewTimeblockName] = useState('');
+  const [newTimeblockDuration, setNewTimeblockDuration] = useState('');
 
   // When filtering: always expand, highlight direct matches
   const effectiveExpanded = filterFn ? true : expanded;
@@ -97,9 +98,15 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
   const addTimeblock = async (e) => {
     e.preventDefault();
     if (!newTimeblock) return;
-    await db.timeblocks.add({ todoId: todo.id, scheduledAt: newTimeblock, name: newTimeblockName.trim() || null });
+    await db.timeblocks.add({
+      todoId: todo.id,
+      scheduledAt: newTimeblock,
+      name: newTimeblockName.trim() || null,
+      duration: newTimeblockDuration !== '' ? parseFloat(newTimeblockDuration) : null,
+    });
     setNewTimeblock('');
     setNewTimeblockName('');
+    setNewTimeblockDuration('');
     setAddingTimeblock(false);
   };
 
@@ -299,6 +306,7 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
                   <li key={tb.id} className="timeblock-entry">
                     {tb.name && <span className="timeblock-name">{tb.name}</span>}
                     <span className="timeblock-date">{formatDatetime(tb.scheduledAt)}</span>
+                    {tb.duration != null && <span className="timeblock-duration">{tb.duration}h</span>}
                     <button
                       className="timeblock-delete"
                       onClick={() => deleteTimeblock(tb.id)}
@@ -329,8 +337,18 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
                   className="timeblock-input"
                   onKeyDown={e => e.key === 'Escape' && setAddingTimeblock(false)}
                 />
+                <input
+                  type="number"
+                  min="0.25"
+                  step="0.25"
+                  value={newTimeblockDuration}
+                  onChange={e => setNewTimeblockDuration(e.target.value)}
+                  className="timeblock-duration-input"
+                  placeholder="Duration (h)"
+                  onKeyDown={e => e.key === 'Escape' && setAddingTimeblock(false)}
+                />
                 <button type="submit" className="btn-primary btn-sm">Add</button>
-                <button type="button" className="btn-cancel btn-sm" onClick={() => { setAddingTimeblock(false); setNewTimeblockName(''); }}>
+                <button type="button" className="btn-cancel btn-sm" onClick={() => { setAddingTimeblock(false); setNewTimeblockName(''); setNewTimeblockDuration(''); }}>
                   Cancel
                 </button>
               </form>
