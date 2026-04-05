@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { liveQuery } from 'dexie';
 import { db } from '../db';
@@ -113,6 +114,7 @@ export default function WorkloadTab() {
   const [timeblocks, setTimeblocks] = useState([]);
   const [tagQuery,   setTagQuery]   = useState('');
   const [nameQuery,  setNameQuery]  = useState('');
+  const [tooltip, setTooltip] = useState(null);
   const [{ year, month }, setYM]    = useState(() => {
     const n = new Date();
     return { year: n.getFullYear(), month: n.getMonth() };
@@ -190,6 +192,7 @@ export default function WorkloadTab() {
   };
 
   return (
+    <>
     <div className="workload-tab">
 
       {/* ── Month navigation ── */}
@@ -282,10 +285,10 @@ export default function WorkloadTab() {
                     to={`/${tb.todoId}`}
                     className="cal-event"
                     style={s ? { background: s.bg, color: s.color, borderColor: s.border } : undefined}
-                    title={`${fmtTime(tb.scheduledAt)} — ${tb.todo.title}`}
+                    onMouseEnter={e => setTooltip({ tb, rect: e.currentTarget.getBoundingClientRect() })}
+                    onMouseLeave={() => setTooltip(null)}
                   >
-                    <span className="cal-event-time">{fmtTime(tb.scheduledAt)}</span>
-                    <span className="cal-event-title">{tb.todo.title}</span>
+                    {tb.name ?? tb.todo.title}
                   </Link>
                 );
               })}
@@ -298,5 +301,34 @@ export default function WorkloadTab() {
         })}
       </div>
     </div>
+
+    {tooltip && createPortal(
+      <div
+        className="cal-tooltip"
+        style={{
+          position: 'fixed',
+          left: tooltip.rect.left,
+          top: tooltip.rect.top < 140
+            ? tooltip.rect.bottom + 6
+            : tooltip.rect.top - 8,
+          transform: tooltip.rect.top < 140 ? 'none' : 'translateY(-100%)',
+          zIndex: 1000,
+          pointerEvents: 'none',
+        }}
+      >
+        <div className="cal-tooltip-time">
+          {fmtTime(tooltip.tb.scheduledAt)}
+          {tooltip.tb.duration != null && (
+            <span className="cal-tooltip-duration"> · {tooltip.tb.duration}h</span>
+          )}
+        </div>
+        {tooltip.tb.name && (
+          <div className="cal-tooltip-label">{tooltip.tb.name}</div>
+        )}
+        <div className="cal-tooltip-todo">{tooltip.tb.todo.title}</div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }

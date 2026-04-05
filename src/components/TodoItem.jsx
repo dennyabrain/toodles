@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { db } from '../db';
 import { tagStyle } from '../utils/tags';
 
@@ -12,6 +12,35 @@ function formatDatetime(iso) {
   const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   if (isToday) return `Today ${timeStr}`;
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + timeStr;
+}
+
+// ── Tree helpers for timeblock reassign ──────────────────────
+
+function getRootId(todoId, allTodos) {
+  const byId = new Map(allTodos.map(t => [t.id, t]));
+  let cur = byId.get(todoId);
+  while (cur?.parentId != null) cur = byId.get(cur.parentId);
+  return cur?.id ?? todoId;
+}
+
+function getSubtreeOrdered(rootId, allTodos) {
+  const result = [];
+  const collect = (id) => {
+    const t = allTodos.find(t => t.id === id);
+    if (!t) return;
+    result.push(t);
+    allTodos.filter(c => c.parentId === id).forEach(c => collect(c.id));
+  };
+  collect(rootId);
+  return result;
+}
+
+function getTodoDepth(todoId, allTodos) {
+  const byId = new Map(allTodos.map(t => [t.id, t]));
+  let depth = 0;
+  let cur = byId.get(todoId);
+  while (cur?.parentId != null) { depth++; cur = byId.get(cur.parentId); }
+  return depth;
 }
 
 function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null, filterFn = null, defaultDetailOpen = false }) {
@@ -37,6 +66,7 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
   const [editTbName, setEditTbName] = useState('');
   const [editTbScheduledAt, setEditTbScheduledAt] = useState('');
   const [editTbDuration, setEditTbDuration] = useState('');
+  const [editTbTodoId, setEditTbTodoId] = useState(null);
 
   // When filtering: always expand, highlight direct matches
   const effectiveExpanded = filterFn ? true : expanded;
@@ -118,15 +148,23 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
 
   const deleteTimeblock = (id) => db.timeblocks.delete(id);
 
+  const editTreeTodos = useMemo(() => {
+    if (editingTbId == null) return [];
+    const rootId = getRootId(todo.id, allTodos);
+    return getSubtreeOrdered(rootId, allTodos);
+  }, [editingTbId, todo.id, allTodos]);
+
   const startEditTb = (tb) => {
     setEditingTbId(tb.id);
     setEditTbName(tb.name ?? '');
     setEditTbScheduledAt(tb.scheduledAt ?? '');
     setEditTbDuration(tb.duration != null ? String(tb.duration) : '');
+    setEditTbTodoId(tb.todoId);
   };
 
   const saveEditTb = async (id) => {
     await db.timeblocks.update(id, {
+      todoId: editTbTodoId,
       name: editTbName.trim() || null,
       scheduledAt: editTbScheduledAt,
       duration: editTbDuration !== '' ? parseFloat(editTbDuration) : null,
@@ -340,9 +378,10 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
                 {myTimeblocks.map(tb => editingTbId === tb.id ? (
                   <form
                     key={tb.id}
-                    className="add-timeblock-form"
+                    className="timeblock-edit-form"
                     onSubmit={e => { e.preventDefault(); saveEditTb(tb.id); }}
                   >
+                    {/* Row 1 — label */}
                     <input
                       type="text"
                       value={editTbName}
@@ -352,25 +391,49 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
                       autoFocus
                       onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
                     />
-                    <input
-                      type="datetime-local"
-                      value={editTbScheduledAt}
-                      onChange={e => setEditTbScheduledAt(e.target.value)}
-                      className="timeblock-input"
-                      onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
-                    />
-                    <input
-                      type="number"
-                      min="0.25"
-                      step="0.25"
-                      value={editTbDuration}
-                      onChange={e => setEditTbDuration(e.target.value)}
-                      className="timeblock-duration-input"
-                      placeholder="Duration (h)"
-                      onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
-                    />
-                    <button type="submit" className="btn-primary btn-sm">Save</button>
-                    <button type="button" className="btn-cancel btn-sm" onClick={cancelEditTb}>Cancel</button>
+                    {/* Row 2 — datetime + duration */}
+                    <div className="timeblock-edit-row">
+                      <input
+                        type="datetime-local"
+                        value={editTbScheduledAt}
+                        onChange={e => setEditTbScheduledAt(e.target.value)}
+                        className="timeblock-input"
+                        onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
+                      />
+                      <input
+                        type="number"
+                        min="0.25"
+                        step="0.25"
+                        value={editTbDuration}
+                        onChange={e => setEditTbDuration(e.target.value)}
+                        className="timeblock-duration-input"
+                        placeholder="Duration (h)"
+                        onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
+                      />
+                    </div>
+                    {/* Row 3 — todo dropdown + actions */}
+                    <div className="timeblock-edit-row">
+                      {editTreeTodos.length > 1 && (
+                        <select
+                          value={editTbTodoId ?? ''}
+                          onChange={e => setEditTbTodoId(Number(e.target.value))}
+                          className="timeblock-todo-select"
+                        >
+                          {editTreeTodos.map(t => {
+                            const d = getTodoDepth(t.id, allTodos);
+                            return (
+                              <option key={t.id} value={t.id}>
+                                {'\u00a0\u00a0'.repeat(d)}{t.title}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      )}
+                      <div className="timeblock-edit-actions">
+                        <button type="submit" className="btn-primary btn-sm">Save</button>
+                        <button type="button" className="btn-cancel btn-sm" onClick={cancelEditTb}>Cancel</button>
+                      </div>
+                    </div>
                   </form>
                 ) : (
                   <li key={tb.id} className="timeblock-entry">
