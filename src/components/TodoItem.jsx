@@ -103,6 +103,17 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
 
   const deleteTimeblock = (id) => db.timeblocks.delete(id);
 
+  const deleteTodo = async () => {
+    const toDelete = [];
+    const collect = (id) => {
+      toDelete.push(id);
+      allTodos.filter(t => t.parentId === id).forEach(c => collect(c.id));
+    };
+    collect(todo.id);
+    await db.timeblocks.where('todoId').anyOf(toDelete).delete();
+    await db.todos.bulkDelete(toDelete);
+  };
+
   const addSubtodo = async (e) => {
     e.preventDefault();
     if (!subtodoTitle.trim()) return;
@@ -182,6 +193,13 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
           title="Add sub-todo"
         >
           +
+        </button>
+        <button
+          className="delete-todo-btn"
+          onClick={deleteTodo}
+          title="Delete todo"
+        >
+          ×
         </button>
       </div>
 
