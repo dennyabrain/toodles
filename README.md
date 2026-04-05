@@ -1,7 +1,9 @@
 # Toodles
 
 An advanced todo list.
-A todo list should not be a source of shame but a tool to help you manage your time well. Toodles is immensely flexible to account for changing nature of your todo items. 
+A todo list should not be a source of shame but a tool to help you manage your time well. 
+Let it be a tool that reflects your progress, celebrate what you got done and prevents you from getting your deadlines derailed.
+Toodles is immensely flexible to account for changing nature of your todo items. 
 
 ## Features
 1. Local only database. All data is stored on your browser and can be exported from one device and imported on another.
