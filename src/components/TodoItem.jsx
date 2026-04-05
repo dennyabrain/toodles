@@ -136,6 +136,8 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
 
   const cancelEditTb = () => setEditingTbId(null);
 
+  const delinkTodo = () => db.todos.update(todo.id, { parentId: null });
+
   const deleteTodo = async () => {
     const toDelete = [];
     const collect = (id) => {
@@ -220,6 +222,15 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
           </span>
         )}
 
+        {todo.parentId != null && (
+          <button
+            className="delink-todo-btn"
+            onClick={delinkTodo}
+            title="Delink — move to top level"
+          >
+            ⇡
+          </button>
+        )}
         <button
           className="add-sub-btn"
           onClick={() => { setAddingSubtodo(true); setExpanded(true); }}

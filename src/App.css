@@ -282,6 +282,7 @@
     background: var(--accent-bg);
 
     .add-sub-btn,
+    .delink-todo-btn,
     .delete-todo-btn {
       opacity: 1;
     }
@@ -371,6 +372,25 @@
     background: color-mix(in srgb, #ef4444 10%, transparent);
     color: #ef4444;
     border-color: color-mix(in srgb, #ef4444 40%, transparent);
+  }
+}
+
+.delink-todo-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 4px;
+  opacity: 0;
+  transition: opacity 0.12s, color 0.12s;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    opacity: 1;
+    color: var(--accent);
   }
 }
 
