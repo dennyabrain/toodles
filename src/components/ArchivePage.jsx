@@ -4,15 +4,6 @@ import { liveQuery } from 'dexie';
 import { db } from '../db';
 import TodoItem from './TodoItem';
 
-function isTreeFullyDone(id, todosById, childrenByParent) {
-  const t = todosById.get(id);
-  if (!t?.completed) return false;
-  for (const child of (childrenByParent.get(id) ?? [])) {
-    if (!isTreeFullyDone(child.id, todosById, childrenByParent)) return false;
-  }
-  return true;
-}
-
 export default function ArchivePage() {
   const [todos, setTodos] = useState([]);
   const [timeblocks, setTimeblocks] = useState([]);
@@ -31,23 +22,7 @@ export default function ArchivePage() {
     return () => sub.unsubscribe();
   }, []);
 
-  const todosById = useMemo(() => new Map(todos.map(t => [t.id, t])), [todos]);
-
-  const childrenByParent = useMemo(() => {
-    const map = new Map();
-    for (const t of todos) {
-      if (t.parentId != null) {
-        if (!map.has(t.parentId)) map.set(t.parentId, []);
-        map.get(t.parentId).push(t);
-      }
-    }
-    return map;
-  }, [todos]);
-
-  const archivedTodos = useMemo(
-    () => todos.filter(t => !t.parentId && isTreeFullyDone(t.id, todosById, childrenByParent)),
-    [todos, todosById, childrenByParent]
-  );
+  const archivedTodos = useMemo(() => todos.filter(t => t.completed), [todos]);
 
   const unarchive = (id) => db.todos.update(id, { completed: false });
 
@@ -68,7 +43,6 @@ export default function ArchivePage() {
               <div key={todo.id} className="archive-entry">
                 <TodoItem
                   todo={todo}
-                  allTodos={todos}
                   allTimeblocks={timeblocks}
                 />
                 <button

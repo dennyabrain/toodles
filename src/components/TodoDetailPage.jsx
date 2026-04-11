@@ -29,32 +29,11 @@ export default function TodoDetailPage() {
 
   const todo = todos.find(t => t.id === id);
 
-  // Build ancestor chain for breadcrumb
-  const ancestors = [];
-  if (todo) {
-    const byId = new Map(todos.map(t => [t.id, t]));
-    let cur = byId.get(todo.parentId);
-    while (cur) {
-      ancestors.unshift(cur);
-      cur = byId.get(cur.parentId);
-    }
-  }
-
   return (
     <div className="app">
       <header className="app-header">
         <div className="detail-page-nav">
           <Link to="/" className="back-link">← Toodles</Link>
-          {ancestors.length > 0 && (
-            <span className="breadcrumb">
-              {ancestors.map(a => (
-                <span key={a.id}>
-                  <Link to={`/${a.id}`} className="breadcrumb-link">{a.title}</Link>
-                  <span className="breadcrumb-sep"> / </span>
-                </span>
-              ))}
-            </span>
-          )}
         </div>
       </header>
 
@@ -65,7 +44,6 @@ export default function TodoDetailPage() {
           <div className="detail-page-body">
             <TodoItem
               todo={todo}
-              allTodos={todos}
               allTimeblocks={timeblocks}
               defaultDetailOpen={true}
             />

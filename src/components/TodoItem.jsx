@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { db } from '../db';
 import { tagStyle } from '../utils/tags';
 
@@ -14,40 +14,8 @@ function formatDatetime(iso) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + timeStr;
 }
 
-// ── Tree helpers for timeblock reassign ──────────────────────
-
-function getRootId(todoId, allTodos) {
-  const byId = new Map(allTodos.map(t => [t.id, t]));
-  let cur = byId.get(todoId);
-  while (cur?.parentId != null) cur = byId.get(cur.parentId);
-  return cur?.id ?? todoId;
-}
-
-function getSubtreeOrdered(rootId, allTodos) {
-  const result = [];
-  const collect = (id) => {
-    const t = allTodos.find(t => t.id === id);
-    if (!t) return;
-    result.push(t);
-    allTodos.filter(c => c.parentId === id).forEach(c => collect(c.id));
-  };
-  collect(rootId);
-  return result;
-}
-
-function getTodoDepth(todoId, allTodos) {
-  const byId = new Map(allTodos.map(t => [t.id, t]));
-  let depth = 0;
-  let cur = byId.get(todoId);
-  while (cur?.parentId != null) { depth++; cur = byId.get(cur.parentId); }
-  return depth;
-}
-
-function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null, filterFn = null, defaultDetailOpen = false }) {
-  const [expanded, setExpanded] = useState(true);
+function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = false }) {
   const [detailOpen, setDetailOpen] = useState(defaultDetailOpen);
-  const [addingSubtodo, setAddingSubtodo] = useState(false);
-  const [subtodoTitle, setSubtodoTitle] = useState('');
 
   // Local form state — initialized from todo prop
   const [estimateValue, setEstimateValue] = useState(todo.estimate?.value ?? '');
@@ -66,16 +34,8 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
   const [editTbName, setEditTbName] = useState('');
   const [editTbScheduledAt, setEditTbScheduledAt] = useState('');
   const [editTbDuration, setEditTbDuration] = useState('');
-  const [editTbTodoId, setEditTbTodoId] = useState(null);
 
-  // When filtering: always expand, highlight direct matches
-  const effectiveExpanded = filterFn ? true : expanded;
   const directMatch = filterFn ? filterFn(todo) : false;
-
-  const children = allTodos.filter(t => t.parentId === todo.id);
-  const visibleChildren = visibleIds
-    ? children.filter(c => visibleIds.has(c.id))
-    : children;
 
   const myTimeblocks = (allTimeblocks ?? [])
     .filter(tb => tb.todoId === todo.id)
@@ -148,23 +108,16 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
 
   const deleteTimeblock = (id) => db.timeblocks.delete(id);
 
-  const editTreeTodos = useMemo(() => {
-    if (editingTbId == null) return [];
-    const rootId = getRootId(todo.id, allTodos);
-    return getSubtreeOrdered(rootId, allTodos);
-  }, [editingTbId, todo.id, allTodos]);
-
   const startEditTb = (tb) => {
     setEditingTbId(tb.id);
     setEditTbName(tb.name ?? '');
     setEditTbScheduledAt(tb.scheduledAt ?? '');
     setEditTbDuration(tb.duration != null ? String(tb.duration) : '');
-    setEditTbTodoId(tb.todoId);
   };
 
   const saveEditTb = async (id) => {
     await db.timeblocks.update(id, {
-      todoId: editTbTodoId,
+      todoId: todo.id,
       name: editTbName.trim() || null,
       scheduledAt: editTbScheduledAt,
       duration: editTbDuration !== '' ? parseFloat(editTbDuration) : null,
@@ -174,49 +127,14 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
 
   const cancelEditTb = () => setEditingTbId(null);
 
-  const delinkTodo = () => db.todos.update(todo.id, { parentId: null });
-
   const deleteTodo = async () => {
-    const toDelete = [];
-    const collect = (id) => {
-      toDelete.push(id);
-      allTodos.filter(t => t.parentId === id).forEach(c => collect(c.id));
-    };
-    collect(todo.id);
-    await db.timeblocks.where('todoId').anyOf(toDelete).delete();
-    await db.todos.bulkDelete(toDelete);
-  };
-
-  const addSubtodo = async (e) => {
-    e.preventDefault();
-    if (!subtodoTitle.trim()) return;
-    await db.todos.add({
-      title: subtodoTitle.trim(),
-      parentId: todo.id,
-      completed: false,
-      createdAt: Date.now(),
-    });
-    setSubtodoTitle('');
-    setAddingSubtodo(false);
-    setExpanded(true);
+    await db.timeblocks.where('todoId').equals(todo.id).delete();
+    await db.todos.delete(todo.id);
   };
 
   return (
-    <div className="todo-item" style={{ '--depth': depth }}>
+    <div className="todo-item">
       <div className={`todo-row${directMatch ? ' filter-match' : ''}`}>
-        {/* Expand / collapse — hidden while filtering (always expanded) */}
-        {!filterFn && visibleChildren.length > 0 ? (
-          <button
-            className="expand-btn"
-            onClick={() => setExpanded(!expanded)}
-            aria-label={expanded ? 'Collapse' : 'Expand'}
-          >
-            {expanded ? '▾' : '▸'}
-          </button>
-        ) : (
-          <span className="expand-spacer" />
-        )}
-
         <input
           type="checkbox"
           checked={todo.completed}
@@ -249,33 +167,12 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
             {todo.estimate.value}{UNIT_SHORT[todo.estimate.unit]}
           </span>
         )}
-        {badgeTimeblock && (
-          <span className="meta-badge timeblock">
-            {formatDatetime(badgeTimeblock.scheduledAt)}
-          </span>
-        )}
         {todo.deadline && (
           <span className="meta-badge deadline">
             ⚑ {formatDatetime(todo.deadline)}
           </span>
         )}
 
-        {todo.parentId != null && (
-          <button
-            className="delink-todo-btn"
-            onClick={delinkTodo}
-            title="Delink — move to top level"
-          >
-            ⇡
-          </button>
-        )}
-        <button
-          className="add-sub-btn"
-          onClick={() => { setAddingSubtodo(true); setExpanded(true); }}
-          title="Add sub-todo"
-        >
-          +
-        </button>
         <button
           className="delete-todo-btn"
           onClick={deleteTodo}
@@ -391,7 +288,7 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
                       autoFocus
                       onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
                     />
-                    {/* Row 2 — datetime + duration */}
+                    {/* Row 2 — datetime + duration + actions */}
                     <div className="timeblock-edit-row">
                       <input
                         type="datetime-local"
@@ -410,25 +307,6 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
                         placeholder="Duration (h)"
                         onKeyDown={e => e.key === 'Escape' && cancelEditTb()}
                       />
-                    </div>
-                    {/* Row 3 — todo dropdown + actions */}
-                    <div className="timeblock-edit-row">
-                      {editTreeTodos.length > 1 && (
-                        <select
-                          value={editTbTodoId ?? ''}
-                          onChange={e => setEditTbTodoId(Number(e.target.value))}
-                          className="timeblock-todo-select"
-                        >
-                          {editTreeTodos.map(t => {
-                            const d = getTodoDepth(t.id, allTodos);
-                            return (
-                              <option key={t.id} value={t.id}>
-                                {'\u00a0\u00a0'.repeat(d)}{t.title}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      )}
                       <div className="timeblock-edit-actions">
                         <button type="submit" className="btn-primary btn-sm">Save</button>
                         <button type="button" className="btn-cancel btn-sm" onClick={cancelEditTb}>Cancel</button>
@@ -498,40 +376,6 @@ function TodoItem({ todo, allTodos, allTimeblocks, depth = 0, visibleIds = null,
               <p className="timeblocks-empty">No timeblocks scheduled.</p>
             )}
           </div>
-        </div>
-      )}
-
-      {addingSubtodo && (
-        <form onSubmit={addSubtodo} className="subtodo-form">
-          <input
-            autoFocus
-            type="text"
-            value={subtodoTitle}
-            onChange={e => setSubtodoTitle(e.target.value)}
-            placeholder="Sub-todo title..."
-            className="todo-input"
-            onKeyDown={e => e.key === 'Escape' && setAddingSubtodo(false)}
-          />
-          <button type="submit" className="btn-primary btn-sm">Add</button>
-          <button type="button" className="btn-cancel btn-sm" onClick={() => setAddingSubtodo(false)}>
-            Cancel
-          </button>
-        </form>
-      )}
-
-      {effectiveExpanded && visibleChildren.length > 0 && (
-        <div className="children">
-          {visibleChildren.map(child => (
-            <TodoItem
-              key={child.id}
-              todo={child}
-              allTodos={allTodos}
-              allTimeblocks={allTimeblocks}
-              depth={depth + 1}
-              visibleIds={visibleIds}
-              filterFn={filterFn}
-            />
-          ))}
         </div>
       )}
     </div>

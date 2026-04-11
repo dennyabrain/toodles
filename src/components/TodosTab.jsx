@@ -4,36 +4,6 @@ import { db } from '../db';
 import { parseTagFilter } from '../utils/tags';
 import TodoItem from './TodoItem';
 
-function isTreeFullyDone(id, todosById, childrenByParent) {
-  const t = todosById.get(id);
-  if (!t?.completed) return false;
-  for (const child of (childrenByParent.get(id) ?? [])) {
-    if (!isTreeFullyDone(child.id, todosById, childrenByParent)) return false;
-  }
-  return true;
-}
-
-// Walk up the tree and collect all ancestor IDs for matching todos
-function computeVisibleIds(filterFn, allTodos) {
-  const byId = new Map(allTodos.map(t => [t.id, t]));
-  const visible = new Set();
-
-  for (const todo of allTodos) {
-    if (!filterFn(todo)) continue;
-    visible.add(todo.id);
-    let cur = todo;
-    while (cur.parentId) {
-      visible.add(cur.parentId);
-      cur = byId.get(cur.parentId);
-      if (!cur) break;
-    }
-  }
-
-  return visible;
-}
-
-// ── Component ───────────────────────────────────────────────
-
 function TodosTab() {
   const [todos, setTodos] = useState([]);
   const [timeblocks, setTimeblocks] = useState([]);
@@ -61,7 +31,6 @@ function TodosTab() {
     if (!newTitle.trim()) return;
     await db.todos.add({
       title: newTitle.trim(),
-      parentId: null,
       completed: false,
       createdAt: Date.now(),
     });
@@ -70,30 +39,9 @@ function TodosTab() {
 
   const filterFn = useMemo(() => parseTagFilter(filterQuery), [filterQuery]);
 
-  const visibleIds = useMemo(
-    () => (filterFn ? computeVisibleIds(filterFn, todos) : null),
-    [filterFn, todos]
-  );
-
-  const todosById = useMemo(() => new Map(todos.map(t => [t.id, t])), [todos]);
-
-  const childrenByParent = useMemo(() => {
-    const map = new Map();
-    for (const t of todos) {
-      if (t.parentId != null) {
-        if (!map.has(t.parentId)) map.set(t.parentId, []);
-        map.get(t.parentId).push(t);
-      }
-    }
-    return map;
-  }, [todos]);
-
-  const topLevelTodos = todos.filter(t => !t.parentId && !isTreeFullyDone(t.id, todosById, childrenByParent));
-  const visibleTopLevel = visibleIds
-    ? topLevelTodos.filter(t => visibleIds.has(t.id))
-    : topLevelTodos;
-
-  const matchCount = filterFn ? todos.filter(filterFn).length : 0;
+  const activeTodos = todos.filter(t => !t.completed);
+  const visibleTodos = filterFn ? activeTodos.filter(filterFn) : activeTodos;
+  const matchCount = filterFn ? activeTodos.filter(filterFn).length : 0;
 
   return (
     <div className="todos-tab">
@@ -139,18 +87,16 @@ function TodosTab() {
       </div>
 
       <div className="todo-list">
-        {visibleTopLevel.length === 0 && !filterFn ? (
+        {visibleTodos.length === 0 && !filterFn ? (
           <p className="empty-state">No todos yet. Add one above to get started.</p>
-        ) : visibleTopLevel.length === 0 ? (
+        ) : visibleTodos.length === 0 ? (
           <p className="empty-state">No todos match this filter.</p>
         ) : (
-          visibleTopLevel.map(todo => (
+          visibleTodos.map(todo => (
             <TodoItem
               key={todo.id}
               todo={todo}
-              allTodos={todos}
               allTimeblocks={timeblocks}
-              visibleIds={visibleIds}
               filterFn={filterFn}
             />
           ))

@@ -17,3 +17,9 @@ db.version(3).stores({
   todos: '++id, title, estimate, deadline, parentId, completed, createdAt, *tags',
   timeblocks: '++id, todoId, scheduledAt'
 });
+
+// v4: remove parentId — todos are flat, no nesting. Migrate existing subtodos to top-level.
+db.version(4).stores({
+  todos: '++id, title, estimate, deadline, completed, createdAt, *tags',
+  timeblocks: '++id, todoId, scheduledAt'
+}).upgrade(tx => tx.todos.toCollection().modify({ parentId: null }));
