@@ -22,3 +22,12 @@ The smallest unit of work is called a todo. It has the following fields :
 User is encouraged to create a todo quickly so only the title is a mandatory field. Everything else can be optional to allow for quick entry and later edits.
 
 A todo can have a parent, which is another todo. This is to enable users to split a todo into smaller chunks as they have more clarity on the task or new complications arise. The system should be flexible enough to handle this. Changing the parent of a todo or deleting it should be easy to allow for flexible evolution of a task.
+
+
+# Upcoming Features
+- Allow creating timeblocks without a date but with a duration
+- Only show these timeblocks without a date in the "Assign Timeblocks" section
+- New Tagging System
+    - Add support for adding nested tags (eg: #type/work and #type/personal)
+    - Allow configuring grouping of todos by tags
+- Add support for habit tracking
