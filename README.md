@@ -26,7 +26,5 @@ A todo can have a parent, which is another todo. This is to enable users to spli
 
 
 # Upcoming Features
-- Allow creating timeblocks without a date but with a duration
-- Only show these timeblocks without a date in the "Assign Timeblocks" section
 - Allow configuring grouping of todos by tags
 - Add support for habit tracking

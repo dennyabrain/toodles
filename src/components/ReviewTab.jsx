@@ -69,23 +69,16 @@ function dayLabel(d) {
   return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-// ── Unscheduled item ─────────────────────────────────────────
+// ── Unscheduled timeblock item ────────────────────────────────
 
-function UnscheduledItem({ todo }) {
-  const toggleComplete = () => db.todos.update(todo.id, { completed: !todo.completed });
-  const tags = todo.tags ?? [];
+function UnscheduledTbItem({ tb, todo }) {
+  const tags = todo?.tags ?? [];
 
   return (
-    <div className={`review-item${todo.completed ? ' done' : ''}`}>
-      <input
-        type="checkbox"
-        checked={todo.completed}
-        onChange={toggleComplete}
-        className="todo-checkbox"
-      />
-      <span className={`review-title${todo.completed ? ' done' : ''}`}>
-        {todo.title}
-      </span>
+    <div className="review-item">
+      {tb.name && <span className="upcoming-tb-label">{tb.name}</span>}
+      <span className="review-title">{todo?.title ?? '(deleted)'}</span>
+      {tb.duration != null && <span className="timeblock-duration">{tb.duration}h</span>}
       {tags.length > 0 && (
         <div className="review-tags">
           {tags.map(tag => {
@@ -102,7 +95,7 @@ function UnscheduledItem({ todo }) {
           })}
         </div>
       )}
-      <Link to={`/${todo.id}`} className="assign-link">Schedule →</Link>
+      <Link to={`/${todo?.id}`} className="assign-link">Schedule →</Link>
     </div>
   );
 }
@@ -196,12 +189,11 @@ export default function ReviewTab() {
     return () => sub.unsubscribe();
   }, []);
 
-  const { overdue, upcoming, upcomingTbs, todosById, unscheduled } = useMemo(() => {
-    const nowMs   = Date.now();
-    const cutoff  = nowMs + 7 * 86_400_000;
-    const active  = todos.filter(t => t.deadline && !t.completed);
-    const scheduledIds = new Set(timeblocks.map(tb => tb.todoId));
-    const byId    = Object.fromEntries(todos.map(t => [t.id, t]));
+  const { overdue, upcoming, upcomingTbs, todosById, unscheduledTbs } = useMemo(() => {
+    const nowMs  = Date.now();
+    const cutoff = nowMs + 7 * 86_400_000;
+    const active = todos.filter(t => t.deadline && !t.completed);
+    const byId   = Object.fromEntries(todos.map(t => [t.id, t]));
 
     return {
       overdue: active
@@ -214,9 +206,9 @@ export default function ReviewTab() {
         .filter(tb => tb.scheduledAt && new Date(tb.scheduledAt).getTime() >= nowMs)
         .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt)),
       todosById: byId,
-      unscheduled: todos
-        .filter(t => !t.completed && !scheduledIds.has(t.id))
-        .sort((a, b) => a.createdAt - b.createdAt),
+      unscheduledTbs: timeblocks
+        .filter(tb => !tb.scheduledAt)
+        .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')),
     };
   }, [todos, timeblocks]);
 
@@ -266,17 +258,17 @@ export default function ReviewTab() {
       </section>
       <section className="review-section">
         <h3 className="review-section-title assign">
-          Assign Timeblocks
-          {unscheduled.length > 0 && (
-            <span className="review-count assign">{unscheduled.length}</span>
+          Schedule Timeblocks
+          {unscheduledTbs.length > 0 && (
+            <span className="review-count assign">{unscheduledTbs.length}</span>
           )}
         </h3>
-        {unscheduled.length === 0 ? (
-          <p className="review-empty">All todos have timeblocks — nicely scheduled!</p>
+        {unscheduledTbs.length === 0 ? (
+          <p className="review-empty">All timeblocks are scheduled!</p>
         ) : (
           <div className="review-list">
-            {unscheduled.map(todo => (
-              <UnscheduledItem key={todo.id} todo={todo} />
+            {unscheduledTbs.map(tb => (
+              <UnscheduledTbItem key={tb.id} tb={tb} todo={todosById[tb.todoId]} />
             ))}
           </div>
         )}

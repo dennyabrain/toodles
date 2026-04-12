@@ -39,7 +39,12 @@ function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = fa
 
   const myTimeblocks = (allTimeblocks ?? [])
     .filter(tb => tb.todoId === todo.id)
-    .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
+    .sort((a, b) => {
+      if (!a.scheduledAt && !b.scheduledAt) return 0;
+      if (!a.scheduledAt) return 1;
+      if (!b.scheduledAt) return -1;
+      return new Date(a.scheduledAt) - new Date(b.scheduledAt);
+    });
 
   const now = Date.now();
   const badgeTimeblock =
@@ -93,12 +98,12 @@ function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = fa
 
   const addTimeblock = async (e) => {
     e.preventDefault();
-    if (!newTimeblock) return;
+    if (!newTimeblockName.trim() || newTimeblockDuration === '') return;
     await db.timeblocks.add({
       todoId: todo.id,
-      scheduledAt: newTimeblock,
-      name: newTimeblockName.trim() || null,
-      duration: newTimeblockDuration !== '' ? parseFloat(newTimeblockDuration) : null,
+      scheduledAt: newTimeblock || null,
+      name: newTimeblockName.trim(),
+      duration: parseFloat(newTimeblockDuration),
     });
     setNewTimeblock('');
     setNewTimeblockName('');
@@ -316,7 +321,10 @@ function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = fa
                 ) : (
                   <li key={tb.id} className="timeblock-entry">
                     {tb.name && <span className="timeblock-name">{tb.name}</span>}
-                    <span className="timeblock-date">{formatDatetime(tb.scheduledAt)}</span>
+                    {tb.scheduledAt
+                      ? <span className="timeblock-date">{formatDatetime(tb.scheduledAt)}</span>
+                      : <span className="timeblock-date unscheduled">Unscheduled</span>
+                    }
                     {tb.duration != null && <span className="timeblock-duration">{tb.duration}h</span>}
                     <button
                       className="timeblock-edit"
@@ -344,15 +352,9 @@ function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = fa
                   value={newTimeblockName}
                   onChange={e => setNewTimeblockName(e.target.value)}
                   className="timeblock-name-input"
-                  placeholder="Label (optional)"
+                  placeholder="Label"
+                  required
                   autoFocus
-                  onKeyDown={e => e.key === 'Escape' && setAddingTimeblock(false)}
-                />
-                <input
-                  type="datetime-local"
-                  value={newTimeblock}
-                  onChange={e => setNewTimeblock(e.target.value)}
-                  className="timeblock-input"
                   onKeyDown={e => e.key === 'Escape' && setAddingTimeblock(false)}
                 />
                 <input
@@ -363,6 +365,14 @@ function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = fa
                   onChange={e => setNewTimeblockDuration(e.target.value)}
                   className="timeblock-duration-input"
                   placeholder="Duration (h)"
+                  required
+                  onKeyDown={e => e.key === 'Escape' && setAddingTimeblock(false)}
+                />
+                <input
+                  type="datetime-local"
+                  value={newTimeblock}
+                  onChange={e => setNewTimeblock(e.target.value)}
+                  className="timeblock-input"
                   onKeyDown={e => e.key === 'Escape' && setAddingTimeblock(false)}
                 />
                 <button type="submit" className="btn-primary btn-sm">Add</button>
@@ -373,7 +383,7 @@ function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = fa
             )}
 
             {myTimeblocks.length === 0 && !addingTimeblock && (
-              <p className="timeblocks-empty">No timeblocks scheduled.</p>
+              <p className="timeblocks-empty">No timeblocks.</p>
             )}
           </div>
         </div>
