@@ -72,7 +72,7 @@ function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = fa
   };
 
   const addTag = (raw) => {
-    const tag = raw.toLowerCase().trim().replace(/[^a-z0-9-_]/g, '');
+    const tag = raw.toLowerCase().trim().replace(/[^a-z0-9\-_\\]/g, '');
     if (!tag || tags.includes(tag)) return;
     db.todos.update(todo.id, { tags: [...tags, tag] });
   };
