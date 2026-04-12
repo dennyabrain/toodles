@@ -28,6 +28,6 @@ A todo can have a parent, which is another todo. This is to enable users to spli
 - Allow creating timeblocks without a date but with a duration
 - Only show these timeblocks without a date in the "Assign Timeblocks" section
 - New Tagging System
-    - Add support for adding nested tags (eg: #type/work and #type/personal)
+    - Add support for adding nested tags (eg: #type/work vs #type/personal, #project/dau vs #project/uli)
     - Allow configuring grouping of todos by tags
 - Add support for habit tracking
