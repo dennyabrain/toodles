@@ -1412,14 +1412,29 @@
 
 .habit-item {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 8px;
-  border-radius: 6px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 10px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: border-color 0.12s, background 0.12s;
 
   &:hover {
     background: var(--accent-bg);
+    border-color: var(--accent-border);
   }
+}
+
+.habit-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.habit-item-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .habit-title {
@@ -1442,11 +1457,44 @@
   flex-shrink: 0;
 
   &.scheduled   { color: #10b981; }
-  &.overdue     { color: #f97316; }
+  &.done-today  { color: #10b981; }
   &.unscheduled { color: var(--text); opacity: 0.45; }
 }
 
-.habit-done-btn {
+/* ── Streak strip ────────────────────────────────────────── */
+
+.habit-streak {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  flex: 1;
+}
+
+.streak-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--border) 80%, transparent);
+  flex-shrink: 0;
+  transition: background 0.12s;
+
+  &.filled {
+    background: #10b981;
+  }
+
+  &.today {
+    outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    outline-offset: 1px;
+  }
+
+  &.filled.today {
+    outline-color: #10b981;
+  }
+}
+
+/* ── Check-in button ─────────────────────────────────────── */
+
+.habit-checkin-btn {
   padding: 4px 12px;
   font-size: 12px;
   font-family: var(--sans);
@@ -1458,11 +1506,16 @@
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: color-mix(in srgb, #10b981 20%, transparent);
     border-color: #10b981;
+  }
+
+  &.done, &:disabled {
+    opacity: 0.45;
+    cursor: default;
   }
 }
 

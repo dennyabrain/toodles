@@ -29,3 +29,10 @@ db.version(5).stores({
   todos: '++id, title, estimate, deadline, completed, createdAt, *tags, type',
   timeblocks: '++id, todoId, scheduledAt, completed'
 });
+
+// v6: checkins table for habit tracking { habitId, date ('YYYY-MM-DD') }
+db.version(6).stores({
+  todos: '++id, title, estimate, deadline, completed, createdAt, *tags, type',
+  timeblocks: '++id, todoId, scheduledAt, completed',
+  checkins: '++id, habitId, date'
+});
