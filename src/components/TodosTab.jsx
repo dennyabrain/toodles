@@ -19,7 +19,7 @@ function TodosTab() {
   }, []);
 
   useEffect(() => {
-    const sub = liveQuery(() => db.timeblocks.orderBy('scheduledAt').toArray()).subscribe({
+    const sub = liveQuery(() => db.timeblocks.toArray()).subscribe({
       next: setTimeblocks,
       error: console.error,
     });
