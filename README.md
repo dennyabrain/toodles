@@ -9,6 +9,7 @@ Toodles is immensely flexible to account for changing nature of your todo items.
 1. Local only database. All data is stored on your browser and can be exported from one device and imported on another.
 2. Review mode to encourage periodic review of your todos. Ensures that you don't end up with unending task list
 3. Automatic suggestions to reduce decision making for you
+4. Add tags to organize todos. Nesting is allowed eg (#type/work vs #type/personal)
 
 ## Data Layer
 ### Todo
@@ -27,7 +28,5 @@ A todo can have a parent, which is another todo. This is to enable users to spli
 # Upcoming Features
 - Allow creating timeblocks without a date but with a duration
 - Only show these timeblocks without a date in the "Assign Timeblocks" section
-- New Tagging System
-    - Add support for adding nested tags (eg: #type/work vs #type/personal, #project/dau vs #project/uli)
-    - Allow configuring grouping of todos by tags
+- Allow configuring grouping of todos by tags
 - Add support for habit tracking
