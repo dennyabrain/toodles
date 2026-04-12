@@ -203,11 +203,11 @@ export default function ReviewTab() {
         .filter(t => { const dl = new Date(t.deadline).getTime(); return dl >= nowMs && dl <= cutoff; })
         .sort((a, b) => new Date(a.deadline) - new Date(b.deadline)),
       upcomingTbs: timeblocks
-        .filter(tb => tb.scheduledAt && new Date(tb.scheduledAt).getTime() >= nowMs)
+        .filter(tb => !tb.completed && tb.scheduledAt && new Date(tb.scheduledAt).getTime() >= nowMs)
         .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt)),
       todosById: byId,
       unscheduledTbs: timeblocks
-        .filter(tb => !tb.scheduledAt)
+        .filter(tb => !tb.completed && !tb.scheduledAt)
         .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')),
     };
   }, [todos, timeblocks]);

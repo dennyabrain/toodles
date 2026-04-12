@@ -37,11 +37,16 @@ function TodosTab() {
     setNewTitle('');
   };
 
+  const [quickOpen, setQuickOpen] = useState(false);
+
   const filterFn = useMemo(() => parseTagFilter(filterQuery), [filterQuery]);
 
   const activeTodos = todos.filter(t => !t.completed);
-  const visibleTodos = filterFn ? activeTodos.filter(filterFn) : activeTodos;
-  const matchCount = filterFn ? activeTodos.filter(filterFn).length : 0;
+  const taskTodos   = activeTodos.filter(t => !t.type || t.type === 'task');
+  const quickTodos  = activeTodos.filter(t => t.type === 'quick');
+
+  const visibleTodos = filterFn ? taskTodos.filter(filterFn) : taskTodos;
+  const matchCount = filterFn ? taskTodos.filter(filterFn).length : 0;
 
   return (
     <div className="todos-tab">
@@ -102,6 +107,31 @@ function TodosTab() {
           ))
         )}
       </div>
+
+      {quickTodos.length > 0 && (
+        <div className="quick-section">
+          <button
+            className="quick-toggle"
+            onClick={() => setQuickOpen(o => !o)}
+          >
+            <span className="quick-toggle-label">Quick Tasks</span>
+            <span className="quick-toggle-count">{quickTodos.length}</span>
+            <span className="quick-toggle-arrow">{quickOpen ? '▾' : '▸'}</span>
+          </button>
+          {quickOpen && (
+            <div className="todo-list">
+              {quickTodos.map(todo => (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  allTimeblocks={timeblocks}
+                  filterFn={null}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

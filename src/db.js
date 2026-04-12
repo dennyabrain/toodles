@@ -23,3 +23,9 @@ db.version(4).stores({
   todos: '++id, title, estimate, deadline, completed, createdAt, *tags',
   timeblocks: '++id, todoId, scheduledAt'
 }).upgrade(tx => tx.todos.toCollection().modify({ parentId: null }));
+
+// v5: add type to todos ('task' | 'habit' | 'quick'); add completed to timeblocks
+db.version(5).stores({
+  todos: '++id, title, estimate, deadline, completed, createdAt, *tags, type',
+  timeblocks: '++id, todoId, scheduledAt, completed'
+});

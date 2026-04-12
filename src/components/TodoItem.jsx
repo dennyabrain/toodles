@@ -225,6 +225,22 @@ function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = fa
             </div>
           </div>
 
+          {/* Type */}
+          <div className="detail-field">
+            <label className="detail-label">Type</label>
+            <div className="type-selector">
+              {[['task', 'Task'], ['habit', 'Habit'], ['quick', 'Quick']].map(([val, label]) => (
+                <button
+                  key={val}
+                  className={`type-btn${(todo.type ?? 'task') === val ? ' active' : ''}`}
+                  onClick={() => db.todos.update(todo.id, { type: val })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <hr className="detail-sep" />
 
           {/* Estimate & Deadline */}
@@ -319,7 +335,7 @@ function TodoItem({ todo, allTimeblocks, filterFn = null, defaultDetailOpen = fa
                     </div>
                   </form>
                 ) : (
-                  <li key={tb.id} className="timeblock-entry">
+                  <li key={tb.id} className={`timeblock-entry${tb.completed ? ' completed' : ''}`}>
                     {tb.name && <span className="timeblock-name">{tb.name}</span>}
                     {tb.scheduledAt
                       ? <span className="timeblock-date">{formatDatetime(tb.scheduledAt)}</span>

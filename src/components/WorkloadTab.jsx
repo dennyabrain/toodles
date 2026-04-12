@@ -190,6 +190,7 @@ export default function WorkloadTab() {
 
   const weekTimeblocks = useMemo(() =>
     timeblocks.filter(tb => {
+      if (tb.completed) return false;
       if (!filteredTodoIds.has(tb.todoId)) return false;
       const t = new Date(tb.scheduledAt).getTime();
       return t >= weekStart.getTime() && t < weekEnd.getTime();
